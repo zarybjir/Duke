@@ -1,0 +1,59 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GODOT_VERSION: 4.4.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Export templates
+        run: |
+          mkdir -v -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
+
+      - name: Import project
+        run: godot --headless --path . --import 2>&1 | tee import.log
+
+      - name: Smoke test (hra se spustí, odehraje kus úrovně a ukončí)
+        run: |
+          timeout 120 godot --headless --path . -- --smoke 2>&1 | tee smoke.log || true
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" import.log smoke.log; then
+            echo "::error::Chyba ve skriptech"; exit 1
+          fi
+          grep -q "SMOKE OK" smoke.log || { echo "::error::Smoke test neprošel"; exit 1; }
+
+      - name: Export Linux
+        run: |
+          mkdir -p build/Ugo
+          godot --headless --path . --export-release "Linux" build/Ugo/Ugo.x86_64
+          chmod +x build/Ugo/Ugo.x86_64
+          cp NAVOD.txt build/Ugo/
+          command -v zip >/dev/null || (apt-get update -qq && apt-get install -y -qq zip)
+          cd build && zip -r Ugo-linux.zip Ugo
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ugo-linux
+          path: build/Ugo-linux.zip
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.${{ github.run_number }}
+          name: Ugo v0.1.${{ github.run_number }}
+          body: Automatické sestavení. Stáhni Ugo-linux.zip, rozbal a spusť Ugo.x86_64.
+          files: build/Ugo-linux.zip
+          make_latest: true

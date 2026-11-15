@@ -1,0 +1,15 @@
+UGO: PRAVĚKÝ HLAD
+=================
+
+Spuštění: dvojklik na Ugo.x86_64 (nebo přidat do Steamu jako "Non-Steam Game").
+
+Ovládání (gamepad / klávesnice):
+  Pohyb ............ levá páčka, D-pad / šipky, A, D
+  Skok ............. A / mezerník, Z
+  Kyj .............. X nebo B / X, J
+  Seskok z kmene ... dolů + skok
+  Pauza ............ Start / Esc
+
+Tipy: skok můžeš zmáčknout i chvilku po sejití z okraje nebo těsně před dopadem.
+Krátký stisk = nízký skok, dlouhý = vysoký. Na dinosaury se dá i skočit.
+Pochodně jsou kontrolní body.
