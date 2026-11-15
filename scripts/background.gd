@@ -10,7 +10,10 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var size := get_viewport_rect().size
+	# Pozadí je navržené pro 480×300 – zobrazíme jeho střed a spodní část.
+	var view := get_viewport_rect().size
+	draw_set_transform(Vector2(roundf((view.x - 480.0) * 0.5), roundf((view.y - 300.0) * 0.6)))
+	var size := Vector2(480, 300)
 	var cx := t * 25.0
 	var cam := get_viewport().get_camera_2d()
 	if cam != null:

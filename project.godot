@@ -19,8 +19,8 @@ Controls="*res://scripts/controls.gd"
 
 [display]
 
-window/size/viewport_width=480
-window/size/viewport_height=300
+window/size/viewport_width=320
+window/size/viewport_height=200
 window/size/mode=3
 window/stretch/mode="viewport"
 window/stretch/aspect="keep"

@@ -183,6 +183,12 @@ func _spawn(c: String, x: int, y: int) -> void:
 			pk.collected.connect(_on_collected)
 			food_total += 1
 			add_child(pk)
+		"T":
+			var big := DinoScript.new()
+			big.big = true
+			big.position = pos
+			big.killed.connect(_on_killed)
+			add_child(big)
 		"d":
 			var dino := DinoScript.new()
 			dino.position = pos

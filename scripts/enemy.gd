@@ -7,6 +7,8 @@ var dead := false
 var facing := -1
 var anim_t := 0.0
 var hurtbox: Area2D
+var hp := 1
+var flash := 0.0
 
 
 func _setup_body(size: Vector2, offset: Vector2) -> void:
@@ -44,7 +46,7 @@ func _touch(p: Variant) -> void:
 		return
 	if p.velocity.y > 10.0 and p.global_position.y < global_position.y - 5.0:
 		p.bounce()
-		die(0)
+		damage(0)
 	else:
 		p.take_damage(global_position.x)
 
@@ -52,7 +54,18 @@ func _touch(p: Variant) -> void:
 ## Volá hráč při zásahu kyjem.
 func hit(from_dir: int) -> void:
 	if not dead:
+		damage(from_dir)
+
+
+## Ubere život; větší nepřátelé vydrží víc ran.
+func damage(from_dir: int) -> void:
+	hp -= 1
+	if hp <= 0:
 		die(from_dir)
+	else:
+		flash = 0.25
+		velocity.x = from_dir * 90.0
+		Sfx.play("hurt", 0.6)
 
 
 func die(from_dir: int) -> void:

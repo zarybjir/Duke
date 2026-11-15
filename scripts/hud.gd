@@ -11,8 +11,8 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	food_label = _label(Vector2(44, 3))
-	time_label = _label(Vector2(200, 3))
-	score_label = _label(Vector2(380, 3))
+	time_label = _label(Vector2(136, 3))
+	score_label = _label(Vector2(240, 3))
 
 
 func _label(pos: Vector2) -> Label:
