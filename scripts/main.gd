@@ -299,7 +299,7 @@ func _take_shots() -> void:
 	_save_shot("1_menu")
 	start_game()
 	# Pozice hráče (sloupec dlaždice) pro jednotlivé snímky.
-	var spots := [[8, "2_start"], [52, "3_propast"], [108, "4_pterodaktylove"], [198, "5_jeskyne"]]
+	var spots := [[8, "2_start"], [47, "3_propast"], [108, "4_pterodaktylove"], [198, "5_jeskyne"]]
 	for spot in spots:
 		level.player.global_position = Vector2(spot[0] * 16 + 8, 14 * 16 + 8)
 		level.player.velocity = Vector2.ZERO

@@ -57,7 +57,7 @@ func _process(delta: float) -> void:
 		time += delta
 	if camera != null and player != null:
 		# Kamera se mírně dívá dopředu ve směru pohybu.
-		camera.offset.x = lerpf(camera.offset.x, player.facing * 28.0, minf(delta * 2.5, 1.0))
+		camera.position.x = lerpf(camera.position.x, player.facing * 28.0, minf(delta * 2.5, 1.0))
 
 
 func cell(x: int, y: int) -> String:

@@ -28,7 +28,7 @@ func _draw() -> void:
 	for i in 5:
 		var x := fposmod(i * 140.0 - cx * 0.05 - t * 4.0, 700.0) - 110.0
 		var y := 30.0 + float((i * 37) % 60)
-		var c := Color(1, 1, 1, 0.85)
+		var c := Color("f2f6fb")
 		draw_circle(Vector2(x, y), 10.0, c)
 		draw_circle(Vector2(x + 12, y - 4), 13.0, c)
 		draw_circle(Vector2(x + 26, y), 9.0, c)
