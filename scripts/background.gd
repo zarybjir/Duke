@@ -12,14 +12,15 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	# Pozadí je navržené pro 480×300 – zobrazíme jeho střed a spodní část.
 	var view := get_viewport_rect().size
-	draw_set_transform(Vector2(roundf((view.x - 480.0) * 0.5), roundf((view.y - 300.0) * 0.6)))
+	# Obloha, slunce a mraky nahoře; krajina posunutá dolů, aby navazovala na zem.
+	draw_set_transform(Vector2(roundf((view.x - 480.0) * 0.5), -45.0))
 	var size := Vector2(480, 300)
 	var cx := t * 25.0
 	var cam := get_viewport().get_camera_2d()
 	if cam != null:
 		cx = cam.get_screen_center_position().x
 
-	draw_texture(Art.sky, Vector2.ZERO)
+	draw_texture(Art.sky, Vector2(0, 45))
 	draw_circle(Vector2(370, 70), 30.0, Color(1, 0.95, 0.7, 0.18))
 	draw_circle(Vector2(370, 70), 25.0, Color(1, 0.95, 0.7, 0.3))
 	draw_circle(Vector2(370, 70), 20.0, Color("fff2b0"))
@@ -39,6 +40,7 @@ func _draw() -> void:
 		draw_circle(Vector2(x + 26, y), 9.0, c)
 		draw_rect(Rect2(x, y, 26, 7), c)
 
+	draw_set_transform(Vector2(roundf((view.x - 480.0) * 0.5), -88.0))
 	# Vzdálené hory se sopkou
 	_layer(cx * 0.1, 600.0, size, Color("a993b8"), Color("bfaacb"), func(px: float) -> float: return 150.0 - 45.0 * absf(sin(px / 600.0 * PI * 3.0)))
 	var vx := 260.0 - fposmod(cx * 0.1, 600.0)
