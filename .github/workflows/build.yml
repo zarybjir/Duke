@@ -35,6 +35,14 @@ jobs:
           fi
           grep -q "SMOKE OK" smoke.log || { echo "::error::Smoke test neprošel"; exit 1; }
 
+      - name: Screenshoty
+        continue-on-error: true
+        run: |
+          apt-get update -qq && apt-get install -y -qq xvfb libgl1-mesa-dri libglx-mesa0 libxcursor1 libxinerama1 libxrandr2 libxi6 >/dev/null
+          mkdir -p shots
+          timeout 90 xvfb-run -a -s "-screen 0 1920x1200x24" godot --path . --rendering-driver opengl3 -- --shots=$PWD/shots 2>&1 | tail -20
+          ls -la shots
+
       - name: Export Linux
         run: |
           mkdir -p build/Ugo
@@ -55,5 +63,7 @@ jobs:
           tag_name: v0.1.${{ github.run_number }}
           name: Ugo v0.1.${{ github.run_number }}
           body: Automatické sestavení. Stáhni Ugo-linux.zip, rozbal a spusť Ugo.x86_64.
-          files: build/Ugo-linux.zip
+          files: |
+            build/Ugo-linux.zip
+            shots/*.png
           make_latest: true

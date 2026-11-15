@@ -22,11 +22,16 @@ var ui_theme: Theme
 var smoke := false
 var smoke_time := 0.0
 var smoke_step := 0
+# Screenshoty (CI s parametrem --shots=<složka>).
+var shots_dir := ""
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	smoke = OS.get_cmdline_user_args().has("--smoke")
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--shots="):
+			shots_dir = a.substr(8)
 	Input.mouse_mode = Input.MOUSE_MODE_HIDDEN
 
 	ui_theme = Theme.new()
@@ -47,6 +52,8 @@ func _ready() -> void:
 	add_child(ui_layer)
 
 	show_title()
+	if shots_dir != "":
+		_take_shots()
 
 
 func _process(delta: float) -> void:
@@ -282,3 +289,31 @@ func _smoke(delta: float) -> void:
 func _smoke_fail(reason: String) -> void:
 	print("SMOKE FAIL: " + reason)
 	get_tree().quit(1)
+
+
+# ---------------------------------------------------------------- screenshoty
+
+func _take_shots() -> void:
+	DirAccess.make_dir_recursive_absolute(shots_dir)
+	await get_tree().create_timer(1.0).timeout
+	_save_shot("1_menu")
+	start_game()
+	# Pozice hráče (sloupec dlaždice) pro jednotlivé snímky.
+	var spots := [[8, "2_start"], [52, "3_propast"], [108, "4_pterodaktylove"], [198, "5_jeskyne"]]
+	for spot in spots:
+		level.player.global_position = Vector2(spot[0] * 16 + 8, 14 * 16 + 8)
+		level.player.velocity = Vector2.ZERO
+		level.camera.reset_smoothing()
+		await get_tree().create_timer(1.2).timeout
+		_save_shot(spot[1])
+	pause()
+	await get_tree().create_timer(0.5).timeout
+	_save_shot("6_pauza")
+	print("SHOTS OK")
+	get_tree().quit(0)
+
+
+func _save_shot(shot_name: String) -> void:
+	var img := get_viewport().get_texture().get_image()
+	img.resize(img.get_width() * 3, img.get_height() * 3, Image.INTERPOLATE_NEAREST)
+	img.save_png(shots_dir.path_join(shot_name + ".png"))
