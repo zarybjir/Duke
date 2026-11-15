@@ -12,6 +12,8 @@ const CheckpointScript := preload("res://scripts/checkpoint.gd")
 const GoalScript := preload("res://scripts/goal.gd")
 const SpikesScript := preload("res://scripts/spikes.gd")
 const BackgroundScript := preload("res://scripts/background.gd")
+const FxScript := preload("res://scripts/fx.gd")
+const EDGE := Color("1e140e")
 
 const SCORE := {"a": 10, "m": 50, "o": 200}
 
@@ -31,6 +33,9 @@ var deaths := 0
 var time := 0.0
 var finished := false
 var decorations: Array = []
+var fx: FxScript
+var shake_t := 0.0
+var shake_amt := 0.0
 
 
 ## Volá se před přidáním do stromu scény.
@@ -50,6 +55,8 @@ func _ready() -> void:
 	bg_layer.add_child(BackgroundScript.new())
 	_build()
 	_spawn_player()
+	fx = FxScript.new()
+	add_child(fx)
 
 
 func _process(delta: float) -> void:
@@ -58,6 +65,16 @@ func _process(delta: float) -> void:
 	if camera != null and player != null:
 		# Kamera se mírně dívá dopředu ve směru pohybu.
 		camera.position.x = lerpf(camera.position.x, player.facing * 28.0, minf(delta * 2.5, 1.0))
+		if shake_t > 0.0:
+			shake_t -= delta
+			camera.offset = Vector2(randf_range(-shake_amt, shake_amt), randf_range(-shake_amt, shake_amt)).round()
+		else:
+			camera.offset = Vector2.ZERO
+
+
+func shake(amount: float, duration: float) -> void:
+	shake_amt = amount
+	shake_t = duration
 
 
 func cell(x: int, y: int) -> String:
@@ -125,12 +142,16 @@ func _add_rect(body: Node, r: Rect2) -> CollisionShape2D:
 func _maybe_decorate(rng: RandomNumberGenerator, x: int, y: int) -> void:
 	var roll := rng.randf()
 	var tex: Texture2D = null
-	if roll < 0.25:
+	if roll < 0.22:
 		tex = Art.tuft
-	elif roll < 0.33:
+	elif roll < 0.30:
 		tex = Art.flower
-	elif roll < 0.37:
+	elif roll < 0.34:
 		tex = Art.bone
+	elif roll < 0.42:
+		tex = Art.fern
+	elif roll < 0.47:
+		tex = Art.rock
 	if tex != null:
 		var s := tex.get_size()
 		decorations.append([tex, Vector2(x * TILE + rng.randi_range(0, int(TILE - s.x)), y * TILE - s.y + 1)])
@@ -179,6 +200,9 @@ func _spawn_player() -> void:
 	player.position = spawn_point
 	player.fall_limit = height * TILE + 48.0
 	player.died.connect(_on_player_died)
+	player.jumped.connect(func(pos: Vector2) -> void: fx.dust(pos, 4))
+	player.landed.connect(func(pos: Vector2) -> void: fx.dust(pos, 6))
+	player.hp_changed.connect(_on_hp_changed)
 	add_child(player)
 	camera = Camera2D.new()
 	camera.limit_left = 0
@@ -196,15 +220,31 @@ func _draw() -> void:
 		for x in width:
 			var c := cell(x, y)
 			var p := Vector2(x * TILE, y * TILE)
-			if c == "#":
-				var above := cell(x, y - 1)
-				draw_texture(Art.tile_dirt if _is_solid(above) else Art.tile_grass, p)
-			elif c == "=":
-				draw_texture(Art.tile_stone, p)
+			if _is_solid(c):
+				var depth := 0
+				while depth < 6 and _is_solid(cell(x, y - depth - 1)):
+					depth += 1
+				var shade := Color(1, 1, 1).darkened(minf(depth * 0.11, 0.5))
+				if c == "#":
+					draw_texture(Art.tile_grass if depth == 0 else Art.tile_dirt, p, shade)
+				else:
+					draw_texture(Art.tile_stone, p, shade)
+				# Tmavé okraje na odkrytých stranách
+				if not _is_solid(cell(x - 1, y)) and x > 0:
+					draw_rect(Rect2(p.x, p.y, 1, TILE), EDGE)
+				if not _is_solid(cell(x + 1, y)) and x < width - 1:
+					draw_rect(Rect2(p.x + TILE - 1, p.y, 1, TILE), EDGE)
+				if not _is_solid(cell(x, y + 1)) and y < height - 1:
+					draw_rect(Rect2(p.x, p.y + TILE - 1, TILE, 1), EDGE)
 			elif c == "-":
 				draw_texture(Art.tile_log, p)
 	for d in decorations:
 		draw_texture(d[0], d[1])
+	# Tráva přečnívající přes horní hranu
+	for y in height:
+		for x in width:
+			if cell(x, y) == "#" and not _is_solid(cell(x, y - 1)):
+				draw_texture(Art.grass_fringe, Vector2(x * TILE, y * TILE - 2))
 
 
 func popup(text: String, pos: Vector2, color: Color = Color.WHITE) -> void:
@@ -228,17 +268,27 @@ func _on_collected(kind: String, pos: Vector2) -> void:
 	score += pts
 	food += 1
 	popup("+%d" % pts, pos, Color("f0d050"))
+	fx.burst(pos, Color("fff4a0"), 8, 60.0, 0.4, 0.0, 2.0)
 
 
 func _on_killed(enemy: Node2D) -> void:
 	score += 100
 	kills += 1
 	popup("+100", enemy.global_position, Color("ffb070"))
+	fx.burst(enemy.global_position, Color("f4f0e0"), 10, 120.0, 0.35, 200.0, 2.0)
+	fx.burst(enemy.global_position, Color("f0d050"), 6, 80.0, 0.3, 0.0, 3.0)
+	shake(2.0, 0.12)
 
 
 func _on_checkpoint(cp: Node2D) -> void:
 	spawn_point = cp.global_position
 	popup("Kontrolní bod!", cp.global_position + Vector2(-14, -16), Color("9ad85a"))
+
+
+func _on_hp_changed(hp: int) -> void:
+	if hp < PlayerScript.MAX_HP and fx != null and not finished:
+		fx.burst(player.global_position, Color("d8402e"), 10, 110.0, 0.45, 250.0, 2.0)
+		shake(3.0, 0.2)
 
 
 func _on_player_died() -> void:

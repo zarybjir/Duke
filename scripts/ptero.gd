@@ -7,7 +7,7 @@ var t := 0.0
 
 
 func _ready() -> void:
-	_setup_body(Vector2(14, 8), Vector2.ZERO)
+	_setup_body(Vector2(20, 8), Vector2.ZERO)
 	collision_mask = 0
 	origin = position
 	t = randf() * TAU
@@ -29,4 +29,5 @@ func _physics_process(delta: float) -> void:
 func _draw() -> void:
 	var tex: Texture2D = Art.ptero1 if int(anim_t * 5.0) % 2 == 0 else Art.ptero2
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(facing, 1))
-	draw_texture(tex, Vector2(-8, -4))
+	var size := tex.get_size()
+	draw_texture(tex, Vector2(-floorf(size.x * 0.5), -floorf(size.y * 0.5)))
